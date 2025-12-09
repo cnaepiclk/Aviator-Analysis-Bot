@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aviator Pro User App</title>
+    <style>
+        /* --- PROFESSIONAL UI STYLES --- */
+        :root {
+            --primary: #ff0040;
+            --primary-dark: #cc0000;
+            --accent: #ffd700;
+            --bg-dark: #0f0f13;
+            --card-bg: rgba(30, 30, 35, 0.95);
+            --text-main: #ffffff;
+            --text-dim: #888888;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at top, #1a0005, #000000);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+            overflow-x: hidden;
+        }
+        .screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: var(--bg-dark); z-index: 10; overflow-y: auto;
+            transition: opacity 0.5s;
+        }
+        .hidden { display: none !important; }
+
+        /* INTRO */
+        .intro-img {
+            width: 150px; height: auto; margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px rgba(255, 0, 64, 0.4));
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .logo-text {
+            font-size: 36px; font-weight: 900; color: var(--primary);
+            text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(255, 0, 64, 0.5); text-align: center;
+        }
+        .sub-text { font-size: 12px; color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 40px; }
+
+        /* CARDS */
+        .auth-card {
+            background: var(--card-bg); padding: 30px; border-radius: 20px;
+            width: 85%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
+        }
+        .auth-title { color: var(--accent); margin-bottom: 20px; text-transform: uppercase; font-size: 18px; letter-spacing: 1px; }
+
+        /* INPUTS & BUTTONS */
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; margin-bottom: 8px; color: var(--text-dim); font-size: 13px; font-weight: 600; }
+        input {
+            width: 100%; padding: 15px; background: #25252b; border: 1px solid #333;
+            border-radius: 10px; color: white; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(255, 0, 64, 0.2); }
+        .btn-primary {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: bold;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 5px 20px rgba(255, 0, 64, 0.3); transition: transform 0.2s;
+        }
+        .btn-primary:active { transform: scale(0.96); }
+        .btn-secondary { background: transparent; border: 1px solid #444; margin-top: 10px; color: #888; }
+
+        /* DASHBOARD */
+        .nav-container {
+            display: flex; background: #151515; padding: 5px; border-radius: 12px; margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 400px;
+        }
+        .nav-btn {
+            flex: 1; padding: 12px; border: none; background: transparent; color: #666;
+            font-weight: bold; font-size: 13px; cursor: pointer; border-radius: 8px; transition: 0.3s;
+        }
+        .nav-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(255, 0, 64, 0.4); }
+
+        .result-card {
+            background: linear-gradient(145deg, #1e1e23, #151518); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 15px; padding: 20px; margin-top: 20px; text-align: center; display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 100%; max-width: 400px; box-sizing: border-box;
+        }
+        
+        /* NOTICE BOX */
+        .notice-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            padding: 15px; border-radius: 10px; margin-bottom: 20px;
+            font-size: 11px; color: #ccc; line-height: 1.5; text-align: left;
+        }
+        .notice-title { color: var(--accent); font-weight: bold; margin-bottom: 5px; display: block; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th { background: var(--accent); color: #000; padding: 10px; font-weight: 800; text-transform: uppercase; }
+        td { padding: 10px; border-bottom: 1px solid #333; text-align: center; color: #ccc; }
+        .start-col { color: #00ffff; font-weight: bold; }
+        .signal-col { color: #fff; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. INTRO SCREEN -->
+    <div id="screen-intro" class="screen">
+        <img src="https://i.postimg.cc/NMpC0016/1001135223.png" class="intro-img" alt="Logo">
+        <div class="logo-text">AVIATOR<br>PREDICTOR</div>
+        <div class="sub-text">Professional Service</div>
+        <div style="width: 250px;">
+            <button class="btn-primary" onclick="showScreen('screen-register')">REGISTER</button>
+            <button class="btn-primary btn-secondary" onclick="showScreen('screen-login')">LOGIN</button>
+        </div>
+    </div>
+
+    <!-- 2. REGISTER SCREEN -->
+    <div id="screen-register" class="screen hidden">
+        <div class="auth-card">
+            <h3 class="auth-title">Create Account</h3>
+            <div class="input-group">
+                <label>Enter Phone Number</label>
+                <input type="number" id="reg-phone" placeholder="07XXXXXXXX">
+            </div>
+            <button class="btn-primary" id="btn-register">Generate ID</button>
+            <p onclick="showScreen('screen-login')" style="color: #666; font-size: 12px; margin-top: 15px; cursor: pointer;">Already have an account? Login</p>
+        </div>
+    </div>
+
+    <!-- 3. CREDENTIALS SCREEN -->
+    <div id="screen-creds" class="screen hidden">
+        <div class="auth-card">
+            <h3 class="auth-title" style="color: #00ff88;">Account Created</h3>
+            <p style="color: #888; font-size: 12px; margin-bottom: 20px;">Please Screenshot this!</p>
+            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--primary);">
+                <div style="font-size: 10px; color: #888; text-transform: uppercase;">User ID</div>
+                <div id="display-uid" style="font-size: 24px; color: #fff; font-weight: bold; letter-spacing: 2px;"></div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--primary);">
+                <div style="font-size: 10px; color: #888; text-transform: uppercase;">Password</div>
+                <div id="display-pass" style="font-size: 24px; color: #fff; font-weight: bold; letter-spacing: 2px;"></div>
+            </div>
+            <button class="btn-primary" id="btn-direct-login">LOGIN TO APP</button>
+        </div>
+    </div>
+
+    <!-- 4. LOGIN SCREEN -->
+    <div id="screen-login" class="screen hidden">
+        <div class="auth-card">
+            <h3 class="auth-title">Member Login</h3>
+            <div class="input-group">
+                <label>User ID</label>
+                <input type="text" id="login-uid" placeholder="Enter 6-Digit ID">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="text" id="login-pass" placeholder="Enter Password">
+            </div>
+            <button class="btn-primary" id="btn-login">Access App</button>
+            <p onclick="showScreen('screen-intro')" style="color: #666; font-size: 12px; margin-top: 15px; cursor: pointer;">Back to Home</p>
+        </div>
+    </div>
+
+    <!-- 5. MAIN APP SCREEN -->
+    <div id="screen-app" class="screen hidden" style="justify-content: flex-start; padding-top: 40px; height: auto; min-height: 100vh;">
+        <div style="width: 90%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center;">
+                <img src="https://i.postimg.cc/NMpC0016/1001135223.png" width="30" style="margin-right: 10px;">
+                <span style="font-weight: bold; color: #fff; font-size: 14px;">ID: <span id="app-uid" style="color: var(--accent);"></span></span>
+            </div>
+            <div id="btn-logout" style="color: var(--primary); font-size: 12px; font-weight: bold; cursor: pointer;">LOGOUT</div>
+        </div>
+
+        <div class="nav-container">
+            <button class="nav-btn active" id="tab-sig">SIGNALS</button>
+            <button class="nav-btn" id="tab-odd">HIGH ODD</button>
+        </div>
+
+        <!-- SIGNAL VIEW -->
+        <div id="view-sig" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <div class="auth-card" style="width: 100%; max-width: 400px; box-sizing: border-box;">
+                <div class="notice-box">
+                    <span class="notice-title">INSTRUCTIONS:</span>
+                    <span style="color: #00ffff;">Loss Time Start:</span> එක දිගට ODD 2.00x ට වඩා අඩු 6 ක් හෝ ඊට වැඩි ගානක් යන්න පටන් ගත්ත Time එක.<br><br>
+                    <span style="color: #00ffff;">Loss Time End:</span> එක දිගට ODD 2.00x ට වඩා අඩු 6 ක් හෝ ඊට වැඩි ගානක් ගිහින් ODD 2.00x ට වඩා වැඩි ODD එකක් ගිය ODD එකේ Time එක.
+                </div>
+                <div class="input-group">
+                    <label>Lost Start Time</label>
+                    <input type="time" id="t1" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Lost End Time</label>
+                    <input type="time" id="t2" step="1">
+                </div>
+                <button class="btn-primary" id="btn-gen-sig">GENERATE 20 SIGNALS</button>
+            </div>
+            <div id="res-sig" class="result-card">
+                <table><thead><tr><th>#</th><th>Start</th><th>Signal</th></tr></thead><tbody id="sig-tbody"></tbody></table>
+            </div>
+        </div>
+
+        <!-- ODD VIEW -->
+        <div id="view-odd" style="width: 100%; display: flex; flex-direction: column; align-items: center; display: none;">
+            <div class="auth-card" style="width: 100%; max-width: 400px; box-sizing: border-box;">
+                <div class="notice-box">
+                    <span class="notice-title">INSTRUCTIONS:</span>
+                    අන්තිමට 10.00x ODD එකක් ගිය ODD එකේ Time එක ඇතුළත් කරන්න.
+                </div>
+                <div class="input-group">
+                    <label>Select Current Time</label>
+                    <input type="time" id="odd-time" step="1">
+                </div>
+                <button class="btn-primary" id="btn-gen-odd">PREDICT NEXT BIG</button>
+            </div>
+            <div id="res-odd" class="result-card">
+                <div style="font-size: 12px; color: var(--primary); font-weight: bold; letter-spacing: 1px;">PREDICTED TIME</div>
+                <div id="odd-val" style="font-size: 42px; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); margin: 10px 0;">00:00:00</div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #333;">
+                    <div style="font-size: 11px; color: var(--text-dim);">RECOMMENDED CASHOUT</div>
+                    <div style="font-size: 18px; color: var(--accent); font-weight: bold; margin-top: 5px;">05.00x / 10.00x / 20.00x</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; font-size: 10px; color: #444; margin-bottom: 20px;">Professional Predictor Service © 2024</div>
+    </div>
+
+    <!-- FIREBASE MODULE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDvoTfnG6yH3qnhmMJizkmdD0yoV_bZLiw",
+            authDomain: "aviatortg-1b863.firebaseapp.com",
+            databaseURL: "https://aviatortg-1b863-default-rtdb.firebaseio.com",
+            projectId: "aviatortg-1b863",
+            storageBucket: "aviatortg-1b863.firebasestorage.app",
+            messagingSenderId: "249836198908",
+            appId: "1:249836198908:web:3c6e34caac0ce71872f079",
+            measurementId: "G-EYL67F8QG9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        // --- GLOBAL STATE ---
+        let CURRENT_UID = null;
+        let NEW_REGISTERED_UID = null;
+
+        // --- UI FUNCTIONS ---
+        window.showScreen = (id) => {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        };
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('btn-register').addEventListener('click', async () => {
+            const phone = document.getElementById('reg-phone').value;
+            if(phone.length < 9) return alert("Invalid Phone");
+
+            const uid = Math.floor(100000 + Math.random() * 900000).toString();
+            const pass = Math.random().toString(36).substring(2, 7).toUpperCase();
+
+            // Save to Firebase
+            try {
+                await set(ref(db, 'users/' + uid), {
+                    uid: uid, pass: pass, phone: phone, sig: false, odd: false
+                });
+                NEW_REGISTERED_UID = uid;
+                document.getElementById('display-uid').innerText = uid;
+                document.getElementById('display-pass').innerText = pass;
+                window.showScreen('screen-creds');
+            } catch(e) { alert("Error: " + e.message); }
+        });
+
+        document.getElementById('btn-direct-login').addEventListener('click', () => {
+            if(NEW_REGISTERED_UID) attemptLogin(NEW_REGISTERED_UID);
+            else window.showScreen('screen-login');
+        });
+
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            const uid = document.getElementById('login-uid').value;
+            const pass = document.getElementById('login-pass').value;
+            
+            const dbRef = ref(db);
+            try {
+                const snapshot = await get(child(dbRef, `users/${uid}`));
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    if(data.pass === pass) attemptLogin(uid);
+                    else alert("Wrong Password");
+                } else {
+                    alert("User not found");
+                }
+            } catch(e) { alert("Error"); }
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            CURRENT_UID = null;
+            location.reload();
+        });
+
+        function attemptLogin(uid) {
+            CURRENT_UID = uid;
+            document.getElementById('app-uid').innerText = uid;
+            window.showScreen('screen-app');
+            monitorUser(uid); // Start listening for deletion
+        }
+
+        // --- REALTIME MONITORING ---
+        function monitorUser(uid) {
+            const userRef = ref(db, 'users/' + uid);
+            onValue(userRef, (snapshot) => {
+                if(!snapshot.exists()) {
+                    alert("Account Removed by Admin");
+                    location.reload();
+                }
+            });
+        }
+
+        // --- GENERATORS ---
+        document.getElementById('btn-gen-sig').addEventListener('click', () => checkAccess('sig'));
+        document.getElementById('btn-gen-odd').addEventListener('click', () => checkAccess('odd'));
+
+        async function checkAccess(type) {
+            if(!CURRENT_UID) return;
+            const snapshot = await get(child(ref(db), `users/${CURRENT_UID}`));
+            if(snapshot.exists()) {
+                const data = snapshot.val();
+                if(type === 'sig') {
+                    if(data.sig) generateSignals();
+                    else alert("ACCESS DENIED! Contact Admin for SIGNALS.");
+                } else {
+                    if(data.odd) generateHighOdd();
+                    else alert("ACCESS DENIED! Contact Admin for HIGH ODD.");
+                }
+            }
+        }
+
+        // --- MATH LOGIC ---
+        function generateSignals() {
+            const t1 = document.getElementById('t1').value;
+            const t2 = document.getElementById('t2').value;
+            if(!t1 || !t2) return alert("Enter both times");
+
+            const d1 = new Date("1970-01-01T"+t1 + (t1.length===5?":00":""));
+            const d2 = new Date("1970-01-01T"+t2 + (t2.length===5?":00":""));
+            let diff = d2 - d1; if(diff < 0) diff += 86400000;
+
+            let html = "";
+            let curr = d2.getTime();
+            for(let i=1; i<=20; i++) {
+                curr += diff;
+                let sig = new Date(curr);
+                let start = new Date(curr - 25000);
+                html += `<tr><td>${i}</td><td class="start-col">${fmt(start)}</td><td class="signal-col">${fmt(sig)}</td></tr>`;
+            }
+            document.getElementById('sig-tbody').innerHTML = html;
+            document.getElementById('res-sig').style.display = 'block';
+        }
+
+        function generateHighOdd() {
+            const t = document.getElementById('odd-time').value;
+            if(!t) return alert("Enter time");
+            const d = new Date("1970-01-01T"+t + (t.length===5?":00":""));
+            const next = new Date(d.getTime() + 5*60000); 
+            document.getElementById('odd-val').innerText = fmt(next);
+            document.getElementById('res-odd').style.display = 'block';
+        }
+
+        function fmt(d) { return d.toTimeString().split(' ')[0]; }
+
+        // --- TABS ---
+        document.getElementById('tab-sig').addEventListener('click', () => switchTab('sig'));
+        document.getElementById('tab-odd').addEventListener('click', () => switchTab('odd'));
+
+        function switchTab(t) {
+            document.getElementById('view-sig').style.display = 'none';
+            document.getElementById('view-odd').style.display = 'none';
+            document.getElementById('tab-sig').classList.remove('active');
+            document.getElementById('tab-odd').classList.remove('active');
+            if(t === 'sig') {
+                document.getElementById('view-sig').style.display = 'flex';
+                document.getElementById('tab-sig').classList.add('active');
+            } else {
+                document.getElementById('view-odd').style.display = 'flex';
+                document.getElementById('tab-odd').classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

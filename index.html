@@ -21,16 +21,22 @@
             background-color: var(--bg-dark);
             background-image: radial-gradient(circle at top, #1a0005, #000000);
             color: var(--text-main);
-            min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center;
-            overflow-x: hidden;
+            height: 100vh;
+            overflow: hidden;
         }
+        
+        /* SCROLLABLE SCREEN SETUP */
         .screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: var(--bg-dark); z-index: 10; overflow-y: auto;
-            transition: opacity 0.5s;
+            display: flex; flex-direction: column; align-items: center;
+            background: var(--bg-dark); z-index: 10;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 50px;
         }
+        
+        #screen-intro, #screen-register, #screen-creds, #screen-login { justify-content: center; }
+        #screen-app { justify-content: flex-start; padding-top: 40px; }
         .hidden { display: none !important; }
 
         /* INTRO */
@@ -52,17 +58,28 @@
             background: var(--card-bg); padding: 30px; border-radius: 20px;
             width: 85%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.1); text-align: center;
+            margin-bottom: 20px; flex-shrink: 0;
         }
         .auth-title { color: var(--accent); margin-bottom: 20px; text-transform: uppercase; font-size: 18px; letter-spacing: 1px; }
 
         /* INPUTS & BUTTONS */
         .input-group { margin-bottom: 20px; text-align: left; }
         label { display: block; margin-bottom: 8px; color: var(--text-dim); font-size: 13px; font-weight: 600; }
+        
+        /* STANDARD INPUT STYLE (Used for Text, Number, Time, Password) */
         input {
             width: 100%; padding: 15px; background: #25252b; border: 1px solid #333;
             border-radius: 10px; color: white; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s;
         }
         input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(255, 0, 64, 0.2); }
+        
+        /* Specific fix for Time Input Icon color */
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
         .btn-primary {
             width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: bold;
@@ -70,12 +87,19 @@
             box-shadow: 0 5px 20px rgba(255, 0, 64, 0.3); transition: transform 0.2s;
         }
         .btn-primary:active { transform: scale(0.96); }
-        .btn-secondary { background: transparent; border: 1px solid #444; margin-top: 10px; color: #888; }
+        
+        .btn-secondary { 
+            background: transparent; 
+            border: 1px solid #444; 
+            margin-top: 10px; 
+            color: #888; 
+            box-shadow: none;
+        }
 
         /* DASHBOARD */
         .nav-container {
             display: flex; background: #151515; padding: 5px; border-radius: 12px; margin-bottom: 25px;
-            border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 400px;
+            border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 400px; flex-shrink: 0;
         }
         .nav-btn {
             flex: 1; padding: 12px; border: none; background: transparent; color: #666;
@@ -87,6 +111,7 @@
             background: linear-gradient(145deg, #1e1e23, #151518); border: 1px solid rgba(255,255,255,0.05);
             border-radius: 15px; padding: 20px; margin-top: 20px; text-align: center; display: none;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 100%; max-width: 400px; box-sizing: border-box;
+            margin-bottom: 50px;
         }
         
         /* NOTICE BOX */
@@ -166,8 +191,8 @@
     </div>
 
     <!-- 5. MAIN APP SCREEN -->
-    <div id="screen-app" class="screen hidden" style="justify-content: flex-start; padding-top: 40px; height: auto; min-height: 100vh;">
-        <div style="width: 90%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div id="screen-app" class="screen hidden">
+        <div style="width: 90%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
             <div style="display: flex; align-items: center;">
                 <img src="https://i.postimg.cc/NMpC0016/1001135223.png" width="30" style="margin-right: 10px;">
                 <span style="font-weight: bold; color: #fff; font-size: 14px;">ID: <span id="app-uid" style="color: var(--accent);"></span></span>
@@ -198,6 +223,8 @@
                 </div>
                 <button class="btn-primary" id="btn-gen-sig">GENERATE 20 SIGNALS</button>
             </div>
+            
+            <!-- RESULT AREA (Scrollable) -->
             <div id="res-sig" class="result-card">
                 <table><thead><tr><th>#</th><th>Start</th><th>Signal</th></tr></thead><tbody id="sig-tbody"></tbody></table>
             </div>
@@ -226,7 +253,7 @@
             </div>
         </div>
 
-        <div style="margin-top: 30px; font-size: 10px; color: #444; margin-bottom: 20px;">Professional Predictor Service © 2024</div>
+        <div style="margin-top: 10px; padding-bottom: 20px; font-size: 10px; color: #444;">Professional Predictor Service © 2024</div>
     </div>
 
     <!-- FIREBASE MODULE -->
@@ -248,17 +275,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        // --- GLOBAL STATE ---
         let CURRENT_UID = null;
         let NEW_REGISTERED_UID = null;
 
-        // --- UI FUNCTIONS ---
         window.showScreen = (id) => {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         };
 
-        // --- EVENT LISTENERS ---
         document.getElementById('btn-register').addEventListener('click', async () => {
             const phone = document.getElementById('reg-phone').value;
             if(phone.length < 9) return alert("Invalid Phone");
@@ -266,7 +290,6 @@
             const uid = Math.floor(100000 + Math.random() * 900000).toString();
             const pass = Math.random().toString(36).substring(2, 7).toUpperCase();
 
-            // Save to Firebase
             try {
                 await set(ref(db, 'users/' + uid), {
                     uid: uid, pass: pass, phone: phone, sig: false, odd: false
@@ -309,10 +332,9 @@
             CURRENT_UID = uid;
             document.getElementById('app-uid').innerText = uid;
             window.showScreen('screen-app');
-            monitorUser(uid); // Start listening for deletion
+            monitorUser(uid);
         }
 
-        // --- REALTIME MONITORING ---
         function monitorUser(uid) {
             const userRef = ref(db, 'users/' + uid);
             onValue(userRef, (snapshot) => {
@@ -323,7 +345,6 @@
             });
         }
 
-        // --- GENERATORS ---
         document.getElementById('btn-gen-sig').addEventListener('click', () => checkAccess('sig'));
         document.getElementById('btn-gen-odd').addEventListener('click', () => checkAccess('odd'));
 
@@ -342,7 +363,6 @@
             }
         }
 
-        // --- MATH LOGIC ---
         function generateSignals() {
             const t1 = document.getElementById('t1').value;
             const t2 = document.getElementById('t2').value;
@@ -375,7 +395,6 @@
 
         function fmt(d) { return d.toTimeString().split(' ')[0]; }
 
-        // --- TABS ---
         document.getElementById('tab-sig').addEventListener('click', () => switchTab('sig'));
         document.getElementById('tab-odd').addEventListener('click', () => switchTab('odd'));
 

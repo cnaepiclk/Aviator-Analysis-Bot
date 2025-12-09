@@ -10,8 +10,10 @@
             --primary: #ff0040;
             --primary-dark: #cc0000;
             --accent: #ffd700;
+            --highlight: #00ffff; /* The blue line color */
             --bg-dark: #0f0f13;
             --card-bg: rgba(30, 30, 35, 0.95);
+            --modal-bg: #1e1e1e; /* Color from screenshot */
             --text-main: #ffffff;
             --text-dim: #888888;
         }
@@ -25,7 +27,6 @@
             overflow: hidden;
         }
         
-        /* SCROLLABLE SCREEN SETUP */
         .screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center;
@@ -62,24 +63,97 @@
         }
         .auth-title { color: var(--accent); margin-bottom: 20px; text-transform: uppercase; font-size: 18px; letter-spacing: 1px; }
 
-        /* INPUTS & BUTTONS */
+        /* INPUTS - GENERAL */
         .input-group { margin-bottom: 20px; text-align: left; }
         label { display: block; margin-bottom: 8px; color: var(--text-dim); font-size: 13px; font-weight: 600; }
         
-        /* STANDARD INPUT STYLE (Used for Text, Number, Time, Password) */
         input {
             width: 100%; padding: 15px; background: #25252b; border: 1px solid #333;
             border-radius: 10px; color: white; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s;
         }
         input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(255, 0, 64, 0.2); }
-        
-        /* Specific fix for Time Input Icon color */
-        input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
+
+        /* TIME DISPLAY INPUT (Read Only - Trigger) */
+        .time-display-input {
+            background: #000;
+            color: var(--highlight);
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            font-weight: bold;
             cursor: pointer;
-            opacity: 0.6;
+            letter-spacing: 2px;
+            border: 1px solid #444;
         }
 
+        /* --- CUSTOM TIME PICKER MODAL STYLES --- */
+        .picker-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .picker-overlay.active { opacity: 1; pointer-events: all; }
+
+        .picker-modal {
+            background: var(--modal-bg);
+            width: 320px;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+        }
+
+        .picker-header {
+            color: var(--highlight);
+            font-size: 18px; margin-bottom: 20px; font-weight: 600;
+        }
+
+        .picker-wheels {
+            display: flex; justify-content: space-between; position: relative;
+            height: 150px; overflow: hidden; margin-bottom: 20px;
+        }
+
+        /* The highlight line in the middle */
+        .picker-highlight {
+            position: absolute; top: 50px; left: 0; width: 100%; height: 50px;
+            border-top: 1px solid var(--highlight);
+            border-bottom: 1px solid var(--highlight);
+            pointer-events: none; box-sizing: border-box;
+        }
+
+        .wheel-col {
+            width: 33%; height: 100%;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+            -ms-overflow-style: none; scrollbar-width: none; /* Hide scrollbar */
+            scroll-snap-type: y mandatory;
+            padding: 50px 0; /* Padding to center first/last item */
+            box-sizing: border-box;
+        }
+        .wheel-col::-webkit-scrollbar { display: none; }
+
+        .wheel-item {
+            height: 50px; line-height: 50px;
+            text-align: center; color: #888; font-size: 18px;
+            scroll-snap-align: center;
+            transition: color 0.2s, font-size 0.2s;
+        }
+        /* JS will add 'active' class to center item */
+        .wheel-item.selected { color: #fff; font-size: 22px; font-weight: bold; }
+
+        .picker-footer {
+            display: flex; justify-content: space-between; margin-top: 10px;
+        }
+        .picker-btn {
+            background: transparent; border: none; color: var(--highlight);
+            font-size: 14px; font-weight: bold; padding: 10px 20px; cursor: pointer;
+        }
+        .picker-btn.cancel { color: #888; }
+        .picker-btn.clear { color: #ff4444; }
+
+
+        /* BUTTONS */
         .btn-primary {
             width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: bold;
@@ -87,14 +161,7 @@
             box-shadow: 0 5px 20px rgba(255, 0, 64, 0.3); transition: transform 0.2s;
         }
         .btn-primary:active { transform: scale(0.96); }
-        
-        .btn-secondary { 
-            background: transparent; 
-            border: 1px solid #444; 
-            margin-top: 10px; 
-            color: #888; 
-            box-shadow: none;
-        }
+        .btn-secondary { background: transparent; border: 1px solid #444; margin-top: 10px; color: #888; box-shadow: none; }
 
         /* DASHBOARD */
         .nav-container {
@@ -114,10 +181,8 @@
             margin-bottom: 50px;
         }
         
-        /* NOTICE BOX */
         .notice-box {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px dashed rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05); border: 1px dashed rgba(255, 255, 255, 0.2);
             padding: 15px; border-radius: 10px; margin-bottom: 20px;
             font-size: 11px; color: #ccc; line-height: 1.5; text-align: left;
         }
@@ -213,18 +278,21 @@
                     <span style="color: #00ffff;">Loss Time Start:</span> එක දිගට ODD 2.00x ට වඩා අඩු 6 ක් හෝ ඊට වැඩි ගානක් යන්න පටන් ගත්ත Time එක.<br><br>
                     <span style="color: #00ffff;">Loss Time End:</span> එක දිගට ODD 2.00x ට වඩා අඩු 6 ක් හෝ ඊට වැඩි ගානක් ගිහින් ODD 2.00x ට වඩා වැඩි ODD එකක් ගිය ODD එකේ Time එක.
                 </div>
+                
+                <!-- CLICKABLE TIME INPUTS -->
                 <div class="input-group">
                     <label>Lost Start Time</label>
-                    <input type="time" id="t1" step="1">
+                    <input type="text" id="t1" class="time-display-input" readonly placeholder="Tap to set time" onclick="openPicker('t1')">
                 </div>
+
                 <div class="input-group">
                     <label>Lost End Time</label>
-                    <input type="time" id="t2" step="1">
+                    <input type="text" id="t2" class="time-display-input" readonly placeholder="Tap to set time" onclick="openPicker('t2')">
                 </div>
+
                 <button class="btn-primary" id="btn-gen-sig">GENERATE 20 SIGNALS</button>
             </div>
             
-            <!-- RESULT AREA (Scrollable) -->
             <div id="res-sig" class="result-card">
                 <table><thead><tr><th>#</th><th>Start</th><th>Signal</th></tr></thead><tbody id="sig-tbody"></tbody></table>
             </div>
@@ -237,10 +305,13 @@
                     <span class="notice-title">INSTRUCTIONS:</span>
                     අන්තිමට 10.00x ODD එකක් ගිය ODD එකේ Time එක ඇතුළත් කරන්න.
                 </div>
+                
+                <!-- CLICKABLE TIME INPUT 3 -->
                 <div class="input-group">
                     <label>Select Current Time</label>
-                    <input type="time" id="odd-time" step="1">
+                    <input type="text" id="odd-time" class="time-display-input" readonly placeholder="Tap to set time" onclick="openPicker('odd-time')">
                 </div>
+
                 <button class="btn-primary" id="btn-gen-odd">PREDICT NEXT BIG</button>
             </div>
             <div id="res-odd" class="result-card">
@@ -255,6 +326,39 @@
 
         <div style="margin-top: 10px; padding-bottom: 20px; font-size: 10px; color: #444;">Professional Predictor Service © 2024</div>
     </div>
+
+    <!-- CUSTOM TIME PICKER OVERLAY -->
+    <div id="picker-overlay" class="picker-overlay">
+        <div class="picker-modal">
+            <div class="picker-header">Set time</div>
+            <div class="picker-wheels">
+                <div class="picker-highlight"></div>
+                
+                <!-- HOURS -->
+                <div class="wheel-col" id="wheel-h">
+                    <!-- JS Injects -->
+                </div>
+                
+                <!-- MINUTES -->
+                <div class="wheel-col" id="wheel-m">
+                    <!-- JS Injects -->
+                </div>
+
+                <!-- SECONDS -->
+                <div class="wheel-col" id="wheel-s">
+                    <!-- JS Injects -->
+                </div>
+            </div>
+            <div class="picker-footer">
+                <button class="picker-btn clear" onclick="clearPicker()">Clear</button>
+                <div style="display:flex;">
+                    <button class="picker-btn cancel" onclick="closePicker()">Cancel</button>
+                    <button class="picker-btn" onclick="setTime()">Set</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- FIREBASE MODULE -->
     <script type="module">
@@ -278,6 +382,96 @@
         let CURRENT_UID = null;
         let NEW_REGISTERED_UID = null;
 
+        // --- GLOBAL PICKER LOGIC ---
+        let currentInputId = null;
+
+        // Generate numbers for wheels
+        function initWheels() {
+            const hCol = document.getElementById('wheel-h');
+            const mCol = document.getElementById('wheel-m');
+            const sCol = document.getElementById('wheel-s');
+            
+            // Add padding empty items for centering
+            const pad = '<div class="wheel-item"></div>';
+            
+            let hHtml = pad;
+            for(let i=0; i<24; i++) hHtml += `<div class="wheel-item">${i.toString().padStart(2,'0')}</div>`;
+            hHtml += pad;
+            hCol.innerHTML = hHtml;
+
+            let mHtml = pad;
+            for(let i=0; i<60; i++) mHtml += `<div class="wheel-item">${i.toString().padStart(2,'0')}</div>`;
+            mHtml += pad;
+            mCol.innerHTML = mHtml;
+            sCol.innerHTML = mHtml; // Same for seconds
+
+            // Attach scroll listeners to highlight center
+            [hCol, mCol, sCol].forEach(col => {
+                col.addEventListener('scroll', () => {
+                    const center = Math.round(col.scrollTop / 50);
+                    const items = col.querySelectorAll('.wheel-item');
+                    items.forEach(i => i.classList.remove('selected'));
+                    if(items[center+1]) items[center+1].classList.add('selected');
+                });
+            });
+        }
+
+        window.openPicker = (inputId) => {
+            currentInputId = inputId;
+            document.getElementById('picker-overlay').classList.add('active');
+            
+            // If input has value, scroll to it
+            const val = document.getElementById(inputId).value;
+            if(val && val.includes(':')) {
+                const parts = val.split(':');
+                scrollToVal('wheel-h', parts[0]);
+                scrollToVal('wheel-m', parts[1]);
+                scrollToVal('wheel-s', parts[2]);
+            } else {
+                // Default to 00
+                scrollToVal('wheel-h', '00');
+                scrollToVal('wheel-m', '00');
+                scrollToVal('wheel-s', '00');
+            }
+        };
+
+        window.closePicker = () => {
+            document.getElementById('picker-overlay').classList.remove('active');
+        };
+
+        window.clearPicker = () => {
+            if(currentInputId) document.getElementById(currentInputId).value = "";
+            closePicker();
+        };
+
+        window.setTime = () => {
+            const h = getScrollVal('wheel-h');
+            const m = getScrollVal('wheel-m');
+            const s = getScrollVal('wheel-s');
+            
+            if(currentInputId) {
+                document.getElementById(currentInputId).value = `${h}:${m}:${s}`;
+            }
+            closePicker();
+        };
+
+        function scrollToVal(colId, val) {
+            const col = document.getElementById(colId);
+            const idx = parseInt(val);
+            col.scrollTop = idx * 50;
+        }
+
+        function getScrollVal(colId) {
+            const col = document.getElementById(colId);
+            const idx = Math.round(col.scrollTop / 50);
+            return idx.toString().padStart(2, '0');
+        }
+
+        // Initialize on load
+        initWheels();
+
+
+        // --- EXISTING APP LOGIC ---
         window.showScreen = (id) => {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
@@ -366,10 +560,11 @@
         function generateSignals() {
             const t1 = document.getElementById('t1').value;
             const t2 = document.getElementById('t2').value;
-            if(!t1 || !t2) return alert("Enter both times");
+            
+            if(!t1 || !t2) return alert("Please set Time");
 
-            const d1 = new Date("1970-01-01T"+t1 + (t1.length===5?":00":""));
-            const d2 = new Date("1970-01-01T"+t2 + (t2.length===5?":00":""));
+            const d1 = new Date("1970-01-01T"+t1);
+            const d2 = new Date("1970-01-01T"+t2);
             let diff = d2 - d1; if(diff < 0) diff += 86400000;
 
             let html = "";
@@ -386,8 +581,9 @@
 
         function generateHighOdd() {
             const t = document.getElementById('odd-time').value;
-            if(!t) return alert("Enter time");
-            const d = new Date("1970-01-01T"+t + (t.length===5?":00":""));
+            if(!t) return alert("Please set Time");
+            
+            const d = new Date("1970-01-01T"+t);
             const next = new Date(d.getTime() + 5*60000); 
             document.getElementById('odd-val').innerText = fmt(next);
             document.getElementById('res-odd').style.display = 'block';
